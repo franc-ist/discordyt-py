@@ -1,2 +1,1 @@
-# youtube
-The YouTube bot for discord!
+YouTube bot for discord.

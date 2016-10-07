@@ -1,0 +1,22 @@
+1.5: Massive cleanup of code. More organised. Added cooldown warnings (available by typing `yt cooldowns`). Added logging. Errors should mostly be gone.
+
+1.4.3: Added info command.
+
+1.4: Channel Search
+
+  + Shows the title & sub count of the channel
+  + Shows the description
+  + Shows the thumbnail (or tries to!)
+
+1.3.1 - 1.3.3: Added cooldowns to commands and cleaned up messy bits of code.
+
+1.3: Now Playing URL for Discord.FM
+
+1.2.1: Initial aesthetics changes. New randomised ping messages.
+
+1.2: Added video title and uploader when displaying video result, for when embeds are turned off.
+
+1.1: Moved to the official YouTube search API
+
+1.0: Initial release.
+
