@@ -1,11 +1,3 @@
-ppa:mc3man/trusty-media
-ppa:fkrull/deadsnake
-libssl-dev
-libffi-dev
-git
-ffmpeg
-libopus-dev
-unzip
 gitdb==2.0.8
 GitPython==2.0.8
 git+https://github.com/Rapptz/discord.py@master#egg=discord.py[voice]
