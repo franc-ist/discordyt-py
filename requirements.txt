@@ -1,5 +1,13 @@
-GitPython
+ppa:mc3man/trusty-media -y
+ppa:fkrull/deadsnake -y
+libssl-dev
+libffi-dev
 git
+ffmpeg
+libopus-dev
+unzip
+gitdb==2.0.8
+GitPython==2.0.8
 git+https://github.com/Rapptz/discord.py@master#egg=discord.py[voice]
-google-api-python-client
-PyNaCl
+google-api-python-client==1.5.1
+PyNaCl==1.0.1
