@@ -1,0 +1,5 @@
+GitPython
+git
+git+https://github.com/Rapptz/discord.py@master#egg=discord.py[voice]
+google-api-python-client
+PyNaCl
