@@ -1,5 +1,5 @@
-ppa:mc3man/trusty-media -y
-ppa:fkrull/deadsnake -y
+--findlinks ppa:mc3man/trusty-media
+--findlinks ppa:fkrull/deadsnake
 libssl-dev
 libffi-dev
 git
