@@ -19,7 +19,7 @@ import subprocess
 
 description = '''Youtube bot for Discord. Searches YouTube and responds with a link to a video.'''
 
-bot = commands.Bot(command_prefix=when_mentioned_or('ytb '), description=description)
+bot = commands.Bot(command_prefix=when_mentioned_or('yt '), description=description)
 session = aiohttp.ClientSession(loop=bot.loop)
 
 sys.modules['win32file'] = None #Some systems will crash without this because Google's Python is built differently
@@ -35,7 +35,7 @@ async def on_ready():
     logger.info("-- Logging in... --")
     logger.info("Logged in as {}".format(bot.user.name))
     logger.info("------")
-    await bot.change_presence(discord.Game(name='yt search'), discord.Status.dnd) # look at that fancy red-ness
+    await bot.change_presence(game=discord.Game(name='yt help'), status=discord.Status.dnd) # look at that fancy red-ness
     await bot.update()
 
 @bot.event
@@ -126,7 +126,7 @@ async def on_command_error(error, ctx):
     else:
         logger.exception(type(error).__name__, exc_info=error)
 
-@bot.command(aliases=["dpy"], pass_context=True)
+@bot.command(aliases=["dpy"], pass_context=True, hidden=True)
 async def updpy(ctx):
     if ctx.message.author.id == "116079569349378049":
         command = subprocess.Popen(["pip3", "install", "-U", "git+https://github.com/Rapptz/discord.py@master#egg=discord.py[voice]"], stdout=subprocess.PIPE)
@@ -145,9 +145,10 @@ async def version():
     msg = "```diff\n"
     msg += "- YouTube\n\n"
     #msg += "CURRENTLY TESTING\n"
-    msg += "! Current Version: 1.5"
+    msg += "! Current Version: 1.6.1"
     msg += "\n\n"
     msg += "+ What's new?\n\n"
+    msg += "! 1.6 - 1.6.1\n--- Added reverse lookup of videos. `yt stats`.\n--- Also, new help server! Whoop! https://discord.gg/yp8WpMh\n\n"
     msg += "! 1.5\n--- Massive cleanup of code. More organised. Added cooldown warnings (available by typing `yt cooldowns`). Added logging. Errors should mostly be gone.\n\n"
     msg += "! 1.4.3\n--- Added info command.\n\n"
     msg += "! 1.4\n--- Channel Search\n\n+ Shows the title & sub count of the channel\n+ Shows the description\n+ Shows the thumbnail (or tries to!)\n\n"
@@ -159,7 +160,7 @@ async def version():
     # msg += "! 1.2\n--- Added video title and uploader when displaying video result, for when embeds are turned off.\n\n"
     # msg += "! 1.1\n--- Moved to the official YouTube search API\n\n"
     # msg += "! 1.0\n--- Initial release.```\n"
-    msg += "For more info, ask for @\U0000200BFrancis#6565 on this server: http://mlyri.cz/discord"
+    msg += "For more info, ask for @\U0000200BFrancis#6565 on this server: https://discord.gg/yp8WpMh"
     await bot.say(msg)
 
 @bot.command(pass_context=True)
@@ -181,8 +182,17 @@ async def info():
     msg = "Hi there! I'm __**YouTube**__, a bot made by **@\U0000200BFrancis#6565**.\n\n"
     msg += "I'm made in Python using the `discord.py` library, and I'm here to interact with **YouTube via Discord**, so you don't have to.\n\n"
     msg += "__**What can I do?**__\n\n"
-    msg += "- I can search YouTube for a video.\n- I can search YouTube for a channel.\n- I *can* do other stuff... But it's in testing!\n\nFor more info, join the MonsterLyrics server (http://mlyri.cz/discord) and ask for @\U0000200BFrancis#6565."
+    msg += "- I can search YouTube for a video.\n- I can search YouTube for a channel.\n- I *can* do other stuff... But it's in testing!\n\nFor more info, join the YouTube help server (https://discord.gg/yp8WpMh) and ask for @\U0000200BFrancis#6565."
     await bot.say(msg)
+
+# ------------------------------------------------------------------------------------------------------------ #  
+#  ____    _                                   _       _____   __  __       ____    _              __    __    #
+# |  _ \  (_)  ___    ___    ___    _ __    __| |     |  ___| |  \/  |     / ___|  | |_   _   _   / _|  / _|   #
+# | | | | | | / __|  / __|  / _ \  | '__|  / _` |     | |_    | |\/| |     \___ \  | __| | | | | | |_  | |_    #
+# | |_| | | | \__ \ | (__  | (_) | | |    | (_| |  _  |  _|   | |  | |      ___) | | |_  | |_| | |  _| |  _|   #
+# |____/  |_| |___/  \___|  \___/  |_|     \__,_| (_) |_|     |_|  |_|     |____/   \__|  \__,_| |_|   |_|     #
+# ------------------------------------------------------------------------------------------------------------ #                                                                                                                                                       
+
 
 @bot.command(aliases=["np"], no_pm=True, pass_context=True, hidden=True)
 @commands.cooldown(30, 600, commands.BucketType.server)
@@ -209,6 +219,56 @@ async def nowplaying(ctx):
                 logger.exception('New Discord FM service found?')
     else:
         await bot.say("This isn't Discord.FM! <https://join.discord.fm>")
+
+# @bot.command(pass_context=True, aliases=["l"])
+# @commands.cooldown(5, 60, commands.BucketType.channel)
+# async def lookup(ctx):
+#     """Searches the DFM library for the song, and checks if it exists."""
+#     try:
+#         await bot.send_typing(ctx.message.channel)
+#         if len(ctx.message.content.split(' ', 2)) == 2:
+#             msg = "Arguments needed!\n\nExample: `yt lookup Darude Sandstorm`"
+#         else:
+#             youtube = build("youtube", "v3", developerKey=key)
+#             search_response = youtube.search().list(q=ctx.message.content.split(' ', 2)[2],part="id,snippet",maxResults=1,type="video").execute()
+#             if len(search_response.get('items')) == 0:
+#                 msg = "No videos found."
+#             else:
+#                 vidid = search_response.get('items')[0]['id']['videoId']
+#                 vidurl = "https://www.youtube.com/watch?v=" + vidid
+#                 yt_url = "http://www.youtube.com/oembed?url={0}&format=json".format(vidurl)
+#                 metadata = await get_json(yt_url)
+#                 title = metadata['title']
+#                 try:
+#                     url = "https://temp.discord.fm/requests/json"
+#                     async with aiohttp.get(url) as r:
+#                         resp = await r.json()
+#                     i = 0
+#                     for title in resp[1]:
+#                         lib = resp[1]
+#                         if title in resp[i][2]['title']:
+#                             await bot.say("{} exists in the Discord.FM database for the library {}!".format(title, lib))
+#                             break
+#                         else:
+#                             i += 1
+#                     else:
+#                         await bot.say("That song doesn't exist in the Discord.FM database, or YouTube returned an incorrect title... ¯\_(ツ)_/¯")
+#                 except:
+#                     await bot.say("Error.")
+#     except Exception as e:
+#         message = 'The bass kicked too hard... :eyes: `{}` This has been reported to the creator.'.format(e)
+#         logger.exception(e)
+#         await bot.say(message)
+#         owner = discord.utils.get(bot.get_all_members(), id='116079569349378049')
+#         await bot.send_message(owner, 'Server: {}\n\nError in command `lookup`: {}\n\n'.format(ctx.message.server, e))
+
+# -------------------------------------------------------------------------------------------------------------------------------------------------------- #
+#  ____    _                    _                    __      __   __                  _____           _                  ____    _              __    __   #
+# / ___|  | |_    __ _   _ __  | |_          ___    / _|     \ \ / /   ___    _   _  |_   _|  _   _  | |__     ___      / ___|  | |_   _   _   / _|  / _|  #
+# \___ \  | __|  / _` | | '__| | __|        / _ \  | |_       \ V /   / _ \  | | | |   | |   | | | | | '_ \   / _ \     \___ \  | __| | | | | | |_  | |_   #
+#  ___) | | |_  | (_| | | |    | |_        | (_) | |  _|       | |   | (_) | | |_| |   | |   | |_| | | |_) | |  __/      ___) | | |_  | |_| | |  _| |  _|  #
+# |____/   \__|  \__,_| |_|     \__|        \___/  |_|         |_|    \___/   \__,_|   |_|    \__,_| |_.__/   \___|     |____/   \__|  \__,_| |_|   |_|    #
+# -------------------------------------------------------------------------------------------------------------------------------------------------------- #                                                                                                                                                       
 
 @bot.command(pass_context=True, aliases=["s"])
 @commands.cooldown(5, 60, commands.BucketType.channel)
@@ -239,45 +299,6 @@ async def search(ctx):
         owner = discord.utils.get(bot.get_all_members(), id='116079569349378049')
         await bot.send_message(owner, 'Server: {}\n\nError in command `search` from id `{}`: {}\n\n'.format(ctx.message.server, vidid, e))
 
-@bot.command(pass_context=True, aliases=["l"])
-@commands.cooldown(5, 60, commands.BucketType.channel)
-async def lookup(ctx):
-    """Searches the DFM library for the song, and checks if it exists."""
-    try:
-        await bot.send_typing(ctx.message.channel)
-        if len(ctx.message.content.split(' ', 2)) == 2:
-            msg = "Arguments needed!\n\nExample: `yt lookup Darude Sandstorm`"
-        else:
-            youtube = build("youtube", "v3", developerKey=key)
-            search_response = youtube.search().list(q=ctx.message.content.split(' ', 2)[2],part="id,snippet",maxResults=1,type="video").execute()
-            if len(search_response.get('items')) == 0:
-                msg = "No videos found."
-            else:
-                vidid = search_response.get('items')[0]['id']['videoId']
-                vidurl = "https://www.youtube.com/watch?v=" + vidid
-                yt_url = "http://www.youtube.com/oembed?url={0}&format=json".format(vidurl)
-                metadata = await get_json(yt_url)
-                title = metadata['title']
-                try:
-                    url = "https://temp.discord.fm/requests/json"
-                    async with aiohttp.get(url) as r:
-                        resp = await r.json()
-                    lib = resp[1]
-                    if title in resp[2][0]:
-                        await bot.say("{} exists in the Discord.FM database for the library {}!".format(title, lib))
-                except Exception as e:
-                    message = 'The bass kicked too hard... :eyes: `{}` This has been reported to the creator.'.format(e)
-                    logger.exception(e)
-                    await bot.say(message)
-                    owner = discord.utils.get(bot.get_all_members(), id='116079569349378049')
-                    await bot.send_message(owner, 'Server: {}\n\nError in command `lookup` from id `{}`: {}\n\n'.format(ctx.message.server, vidid, e))
-    except Exception as e:
-        message = 'The bass kicked too hard... :eyes: `{}` This has been reported to the creator.'.format(e)
-        logger.exception(e)
-        await bot.say(message)
-        owner = discord.utils.get(bot.get_all_members(), id='116079569349378049')
-        await bot.send_message(owner, 'Server: {}\n\nError in command `lookup` from id `{}`: {}\n\n'.format(ctx.message.server, vidid, e))
-
 @bot.command(pass_context=True, aliases=["c"])
 @commands.cooldown(5, 60, commands.BucketType.channel)
 async def channel(ctx):
@@ -303,11 +324,9 @@ async def channel(ctx):
                 msg = '**Channel:** {}\n**Subscribers:** {}\n<{}>\n\n**Thumbnail:** {}'.format(name, subs, chanurl, img)
         await bot.say(msg)
     except Exception as e:
-        message = 'The bass kicked too hard... :eyes: `{}` This has been reported to the creator.'.format(e)
+        message = 'Soooo... YouTube returned a video, but there was no data for it. ¯\_(ツ)_/¯ :eyes: `{}` This has been reported to the creator.'.format(e)
         logger.exception(e)
         await bot.say(message)
-        owner = discord.utils.get(bot.get_all_members(), id='116079569349378049')
-        await bot.send_message(owner, 'Server: {}\n\nError in command `channel` from id `{}`: {}\n\n'.format(ctx.message.server, chanid, e))
 
 @bot.command(pass_context=True, aliases=['st'])
 @commands.cooldown(5, 60, commands.BucketType.channel)
@@ -318,17 +337,25 @@ async def stats(ctx):
         if len(ctx.message.content.split(' ', 2)) == 2:
             msg = "Arguments needed!\n\nExample: `yt stats https://www.youtube.com/watch?v=dQw4w9WgXcQ`"
         else:
+            url = re.compile(r'http(?:s?):\/\/(?:www\.)?youtu(?:be\.com\/watch\?v=|\.be\/)([\w\-\_]*)(&(amp;)?‌​[\w\?‌​=]*)?')
+            shorturl = re.compile(r'http(?:s?):\/\/?youtu(?:\.be\/)([\w\-\_]*)(&(amp;)?‌​[\w\?‌​=]*)?')
             q=ctx.message.content.split(' ', 2)[2]
-            yt_url = "http://www.youtube.com/oembed?url={0}&format=json".format(q)
-            metadata = await get_json(yt_url)
-            msg = '**Title:** _{}_\n**Uploader:** _{}_\n\n<{}>'.format(metadata['title'], metadata['author_name'], vidurl)
-        await bot.say(msg)
+            match = re.search(url, q)
+            if match:
+                match2 = re.search(shorturl, q)
+                if match2:
+                    a = match2.group(1)
+                    q = 'https://www.youtube.com/watch?v={}'.format(a)
+                vid_url = "http://www.youtube.com/oembed?url={0}&format=json".format(q)
+                metadata = await get_json(vid_url)
+                msg = '**Title:** _{}_\n**Uploader:** _{}_\n\n<{}>'.format(metadata['title'], metadata['author_name'], q)
+                await bot.say(msg)
     except Exception as e:
-        message = 'The bass kicked too hard... :eyes: `{}` This has been reported.'.format(e)
+        message = 'The bass kicked too hard... :eyes: `{}` (Probably not allowed to get info for the video...) This has been reported.'.format(e)
         logger.exception(e)
         await bot.say(message)
         owner = discord.utils.get(bot.get_all_members(), id='116079569349378049')
-        await bot.send_message(owner, 'Server: {}\n\nError in command `search` from id `{}`: {}\n\n'.format(ctx.message.server, vidid, e))
+        await bot.send_message(owner, 'Server: {}\n\nError in command `stats` from id `{}`: {}\n\n'.format(ctx.message.server, q, e))
 
 
 async def get_json(yt_url):
@@ -339,6 +366,14 @@ async def get_json(yt_url):
     async with aiohttp.get(yt_url) as r:
         result = await r.json()
     return result
+
+# ----------------------------------------------------------------------------------------------------------------------------------------------- #
+#  _____               _                  __      __   __                  _____           _                  ____    _              __    __     #
+# | ____|  _ __     __| |         ___    / _|     \ \ / /   ___    _   _  |_   _|  _   _  | |__     ___      / ___|  | |_   _   _   / _|  / _|    #
+# |  _|   | '_ \   / _` |        / _ \  | |_       \ V /   / _ \  | | | |   | |   | | | | | '_ \   / _ \     \___ \  | __| | | | | | |_  | |_     #
+# | |___  | | | | | (_| |       | (_) | |  _|       | |   | (_) | | |_| |   | |   | |_| | | |_) | |  __/      ___) | | |_  | |_| | |  _| |  _|    #
+# |_____| |_| |_|  \__,_|        \___/  |_|         |_|    \___/   \__,_|   |_|    \__,_| |_.__/   \___|     |____/   \__|  \__,_| |_|   |_|      #
+# ----------------------------------------------------------------------------------------------------------------------------------------------- #
 
 @bot.command(no_pm=True, hidden=True)
 @commands.cooldown(1, 40, commands.BucketType.server)
@@ -425,7 +460,7 @@ async def update(ctx):
 def main():
     set_logger()
     try:
-        yield from bot.login('') 
+        yield from bot.login('') #gitignore
         #login here
     except TypeError as e:
         logger.warning(e)
