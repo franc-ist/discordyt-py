@@ -19,7 +19,7 @@ import subprocess
 
 description = '''Youtube bot for Discord. Searches YouTube and responds with a link to a video.'''
 
-bot = commands.Bot(command_prefix=when_mentioned_or('yt '), description=description)
+bot = commands.Bot(command_prefix=when_mentioned_or('yt '), description=description, shard_id=0, shard_count=3)
 session = aiohttp.ClientSession(loop=bot.loop)
 
 sys.modules['win32file'] = None #Some systems will crash without this because Google's Python is built differently
@@ -34,9 +34,11 @@ async def on_ready():
         bot.uptime = int(time.perf_counter())
     logger.info("-- Logging in... --")
     logger.info("Logged in as {}".format(bot.user.name))
+    logger.info("Shard ID: {}".format(shard_id))
     logger.info("------")
     await bot.change_presence(game=discord.Game(name='yt help'), status=discord.Status.dnd) # look at that fancy red-ness
     await bot.update()
+    comm_count = 0
 
 @bot.event
 async def update():
@@ -162,6 +164,7 @@ async def version():
     # msg += "! 1.0\n--- Initial release.```\n"
     msg += "For more info, ask for @\U0000200BFrancis#6565 on this server: https://discord.gg/yp8WpMh"
     await bot.say(msg)
+    comm_count += 1
 
 @bot.command(pass_context=True)
 async def cooldowns(ctx):
@@ -174,6 +177,7 @@ async def cooldowns(ctx):
         msg += "Now playing: 30/600s\n"
     msg += "Stats: 1/300s per server"
     await bot.say(msg)
+    comm_count += 1
 
 @bot.command()
 @commands.cooldown(1, 60, commands.BucketType.server)
@@ -184,6 +188,7 @@ async def info():
     msg += "__**What can I do?**__\n\n"
     msg += "- I can search YouTube for a video.\n- I can search YouTube for a channel.\n- I *can* do other stuff... But it's in testing!\n\nFor more info, join the YouTube help server (https://discord.gg/yp8WpMh) and ask for @\U0000200BFrancis#6565."
     await bot.say(msg)
+    comm_count += 1
 
 # ------------------------------------------------------------------------------------------------------------ #  
 #  ____    _                                   _       _____   __  __       ____    _              __    __    #
@@ -219,6 +224,7 @@ async def nowplaying(ctx):
                 logger.exception('New Discord FM service found?')
     else:
         await bot.say("This isn't Discord.FM! <https://join.discord.fm>")
+    comm_count += 1
 
 # @bot.command(pass_context=True, aliases=["l"])
 # @commands.cooldown(5, 60, commands.BucketType.channel)
@@ -298,6 +304,7 @@ async def search(ctx):
         await bot.say(message)
         owner = discord.utils.get(bot.get_all_members(), id='116079569349378049')
         await bot.send_message(owner, 'Server: {}\n\nError in command `search` from id `{}`: {}\n\n'.format(ctx.message.server, vidid, e))
+    comm_count += 1
 
 @bot.command(pass_context=True, aliases=["c"])
 @commands.cooldown(5, 60, commands.BucketType.channel)
@@ -327,6 +334,7 @@ async def channel(ctx):
         message = 'Soooo... YouTube returned a video, but there was no data for it. ¯\_(ツ)_/¯ :eyes: `{}` This has been reported to the creator.'.format(e)
         logger.exception(e)
         await bot.say(message)
+    comm_count += 1
 
 @bot.command(pass_context=True, aliases=['st'])
 @commands.cooldown(5, 60, commands.BucketType.channel)
@@ -356,6 +364,7 @@ async def stats(ctx):
         await bot.say(message)
         owner = discord.utils.get(bot.get_all_members(), id='116079569349378049')
         await bot.send_message(owner, 'Server: {}\n\nError in command `stats` from id `{}`: {}\n\n'.format(ctx.message.server, q, e))
+    comm_count += 1
 
 
 async def get_json(yt_url):
@@ -381,11 +390,12 @@ async def ping():
     """Pong!"""
     choices = ["I'm alive...", "What do you want?", "Can't you see I'm sleeping here?", "Ugh. Is it Monday again?", "Time to remember the most important person here.", "You still suck.", "What's your name?"]
     await bot.say(randchoice(choices))
+    comm_count += 1
 
 @bot.command(hidden=True, aliases=['bs'])
 @commands.cooldown(1, 300, commands.BucketType.server)
 async def botstats():
-    """Server count"""
+    """Statistics about the bot"""
     users = str(len([m for m in set(bot.get_all_members())]))
     msg = "Servers: {}".format(len(list(bot.servers)))
     msg += "\nUsers: {}".format(users)
@@ -393,8 +403,10 @@ async def botstats():
     # msg += "\n{} channels searched.".format(channel_count)
     up = abs(bot.uptime - int(time.perf_counter()))
     up = str(datetime.timedelta(seconds=up))
-    msg += "\nUptime: {}".format(up)
+    msg += "\nShard Uptime: {}".format(up)
+    msg += "\nCommands since boot: {}".format(comm_count)
     await bot.say(msg)
+    comm_count += 1
 
 @bot.command(pass_context=True, hidden=True)
 async def name(ctx, *, name):
