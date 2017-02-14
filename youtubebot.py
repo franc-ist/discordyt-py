@@ -1,6 +1,9 @@
+import os
 import discord
 from discord.ext import commands
 from discord.ext.commands import when_mentioned_or
+# from .utils import dataIO
+# from .utils import checks
 import aiohttp
 import re
 import asyncio
@@ -17,15 +20,18 @@ import datetime
 import subprocess
 
 
+
 description = '''Youtube bot for Discord. Searches YouTube and responds with a link to a video.'''
 
-bot = commands.Bot(command_prefix=when_mentioned_or('yt '), description=description, shard_id=0, shard_count=3)
+bot = commands.Bot(command_prefix=when_mentioned_or('yt '), description=description, shard_id=0, shard_count=5)
 session = aiohttp.ClientSession(loop=bot.loop)
 
+print("logging in shard 1 (0)")
+
 sys.modules['win32file'] = None #Some systems will crash without this because Google's Python is built differently
-key = ''
-carbon_key = ''
-dbots_key = ''
+key = '' #google api key
+carbon_key = '' #carbonitex key
+dbots_key = '' #bots.discord.pw key
 
 @bot.event
 async def on_ready():
@@ -34,16 +40,16 @@ async def on_ready():
         bot.uptime = int(time.perf_counter())
     logger.info("-- Logging in... --")
     logger.info("Logged in as {}".format(bot.user.name))
-    logger.info("Shard ID: {}".format(shard_id))
     logger.info("------")
-    await bot.change_presence(game=discord.Game(name='yt help'), status=discord.Status.dnd) # look at that fancy red-ness
+    await bot.change_presence(game=discord.Game(name='yt help')) # look at that fancy red-ness
     await bot.update()
-    comm_count = 0
 
 @bot.event
 async def update():
 
     payload = json.dumps({
+        'shard_id': 0,
+        'shard_count': 5,
         'server_count': len(bot.servers)
     })
 
@@ -60,11 +66,18 @@ async def update():
 
     CARBONITEX_API_BOTDATA = 'https://www.carbonitex.net/discord/data/botdata.php'
     carbon_payload = {
-        'key': carbon_key,
-        'servercount': len(bot.servers)
+        'key': '', #replace with your own key for carbon
+        'servercount': len(bot.servers),
+        'shardid': '0',
+        'shardcount': '5'
     }
-    async with self.session.post(CARBONITEX_API_BOTDATA, data=carbon_payload) as resp:
-        logger.info('Carbon statistics returned {0.status} for {1}'.format(resp, carbon_payload))
+    headers = {
+        'User-Agent': 'YouTubeBot/1.0',
+        'Content-Type': 'application/json'
+    }
+
+    async with session.post(CARBONITEX_API_BOTDATA, data=carbon_payload, headers=headers) as resp:
+        logger.info('Carbon statistics returned {0.status} for {1}'.format(resp, len(bot.servers)))
 
 @bot.event
 async def on_server_join(server):
@@ -81,7 +94,7 @@ def set_logger():
     handler = logging.FileHandler(
         filename='discord.log', encoding='utf-8', mode='a')
     handler.setFormatter(logging.Formatter(
-        '%(asctime)s %(levelname)s Discord: %(funcName)s %(lineno)d: '
+        '%(asctime)s %(levelname)s Discord: %(funcName)s (Line %(lineno)d): '
         '%(message)s',
         datefmt="[%d/%m/%Y %H:%M]"))
     logger.addHandler(handler)
@@ -90,7 +103,7 @@ def set_logger():
     logger.setLevel(logging.INFO)
 
     yt_format = logging.Formatter(
-        '%(asctime)s %(levelname)s YouTube Code: %(funcName)s %(lineno)d: '
+        '%(asctime)s %(levelname)s YouTube Code: %(funcName)s (Line %(lineno)d): '
         '%(message)s',
         datefmt="[%d/%m/%Y %H:%M]")
 
@@ -128,17 +141,6 @@ async def on_command_error(error, ctx):
     else:
         logger.exception(type(error).__name__, exc_info=error)
 
-@bot.command(aliases=["dpy"], pass_context=True, hidden=True)
-async def updpy(ctx):
-    if ctx.message.author.id == "116079569349378049":
-        command = subprocess.Popen(["pip3", "install", "-U", "git+https://github.com/Rapptz/discord.py@master#egg=discord.py[voice]"], stdout=subprocess.PIPE)
-        output = command.stdout.read().decode()
-        await bot.say("```" + output + "```")
-        if "Already up-to-date." not in output:
-            await bot.say("Restarting now to apply changes...")
-            session.close()
-            await bot.logout()
-
 
 @bot.command(aliases=["v"])
 @commands.cooldown(1, 60, commands.BucketType.server)
@@ -164,7 +166,6 @@ async def version():
     # msg += "! 1.0\n--- Initial release.```\n"
     msg += "For more info, ask for @\U0000200BFrancis#6565 on this server: https://discord.gg/yp8WpMh"
     await bot.say(msg)
-    comm_count += 1
 
 @bot.command(pass_context=True)
 async def cooldowns(ctx):
@@ -177,7 +178,6 @@ async def cooldowns(ctx):
         msg += "Now playing: 30/600s\n"
     msg += "Stats: 1/300s per server"
     await bot.say(msg)
-    comm_count += 1
 
 @bot.command()
 @commands.cooldown(1, 60, commands.BucketType.server)
@@ -187,8 +187,8 @@ async def info():
     msg += "I'm made in Python using the `discord.py` library, and I'm here to interact with **YouTube via Discord**, so you don't have to.\n\n"
     msg += "__**What can I do?**__\n\n"
     msg += "- I can search YouTube for a video.\n- I can search YouTube for a channel.\n- I *can* do other stuff... But it's in testing!\n\nFor more info, join the YouTube help server (https://discord.gg/yp8WpMh) and ask for @\U0000200BFrancis#6565."
+    msg += "\n\nLike what I do? Donate here: https://paypal.me/MLAutomod/5"
     await bot.say(msg)
-    comm_count += 1
 
 # ------------------------------------------------------------------------------------------------------------ #  
 #  ____    _                                   _       _____   __  __       ____    _              __    __    #
@@ -224,7 +224,6 @@ async def nowplaying(ctx):
                 logger.exception('New Discord FM service found?')
     else:
         await bot.say("This isn't Discord.FM! <https://join.discord.fm>")
-    comm_count += 1
 
 # @bot.command(pass_context=True, aliases=["l"])
 # @commands.cooldown(5, 60, commands.BucketType.channel)
@@ -304,7 +303,6 @@ async def search(ctx):
         await bot.say(message)
         owner = discord.utils.get(bot.get_all_members(), id='116079569349378049')
         await bot.send_message(owner, 'Server: {}\n\nError in command `search` from id `{}`: {}\n\n'.format(ctx.message.server, vidid, e))
-    comm_count += 1
 
 @bot.command(pass_context=True, aliases=["c"])
 @commands.cooldown(5, 60, commands.BucketType.channel)
@@ -334,7 +332,6 @@ async def channel(ctx):
         message = 'Soooo... YouTube returned a video, but there was no data for it. ¯\_(ツ)_/¯ :eyes: `{}` This has been reported to the creator.'.format(e)
         logger.exception(e)
         await bot.say(message)
-    comm_count += 1
 
 @bot.command(pass_context=True, aliases=['st'])
 @commands.cooldown(5, 60, commands.BucketType.channel)
@@ -364,7 +361,6 @@ async def stats(ctx):
         await bot.say(message)
         owner = discord.utils.get(bot.get_all_members(), id='116079569349378049')
         await bot.send_message(owner, 'Server: {}\n\nError in command `stats` from id `{}`: {}\n\n'.format(ctx.message.server, q, e))
-    comm_count += 1
 
 
 async def get_json(yt_url):
@@ -372,9 +368,26 @@ async def get_json(yt_url):
     Returns the JSON from an URL.
     Expects the url to be valid and return a JSON object.
     """
-    async with aiohttp.get(yt_url) as r:
+    async with session.get(yt_url) as r:
         result = await r.json()
     return result
+
+# ---
+# Channel checking
+# ---
+
+# async def notify(message):
+#     """Automatically notifies a channel when a new video is uploaded"""
+#     vididurl = "https://www.googleapis.com/youtube/v3/search?key={}&channelId={}&type=video&part=snippet,id&order=date&maxResults=1".format(key, chanid)
+#     async with session.get(vididurl) as r:
+#         resp = await r.json()
+#     latestid = settings[chanid][latestid]
+#     if resp != latestid:
+#         msg = "New video! {}".format(resp)
+#         await bot.send_message(notifychan, msg)
+#         settings[chanid][latestid] = resp
+#         await fileIO("data/settings.json", "save", settings)
+
 
 # ----------------------------------------------------------------------------------------------------------------------------------------------- #
 #  _____               _                  __      __   __                  _____           _                  ____    _              __    __     #
@@ -390,28 +403,39 @@ async def ping():
     """Pong!"""
     choices = ["I'm alive...", "What do you want?", "Can't you see I'm sleeping here?", "Ugh. Is it Monday again?", "Time to remember the most important person here.", "You still suck.", "What's your name?"]
     await bot.say(randchoice(choices))
-    comm_count += 1
 
 @bot.command(hidden=True, aliases=['bs'])
 @commands.cooldown(1, 300, commands.BucketType.server)
 async def botstats():
-    """Statistics about the bot"""
+    """Server count"""
     users = str(len([m for m in set(bot.get_all_members())]))
+    #DISCORD_BOTS_API = 'https://bots.discord.pw/api'
+
+#    headers = {
+#        'authorization': dbots_key,
+#        'content-type': 'application/json'
+#    }
+
+ #   url = '{0}/bots/205224819883638785'.format(DISCORD_BOTS_API)
+ #   async with session.get(url, authorization=dbots_key) as resp:
+ #       logger.info('got stats')
+ #       logger.info(resp)
+ #   servers = resp['server_count']
     msg = "Servers: {}".format(len(list(bot.servers)))
+    msg += "\nServer count may be broken due to sharding implementation...\n\n"
+    msg += "Shard ID: 1/5"
     msg += "\nUsers: {}".format(users)
     # msg += "\n{} high quality videos searched.".format(search_count)
     # msg += "\n{} channels searched.".format(channel_count)
     up = abs(bot.uptime - int(time.perf_counter()))
     up = str(datetime.timedelta(seconds=up))
-    msg += "\nShard Uptime: {}".format(up)
-    msg += "\nCommands since boot: {}".format(comm_count)
+    msg += "\nUptime: {}".format(up)
     await bot.say(msg)
-    comm_count += 1
 
 @bot.command(pass_context=True, hidden=True)
 async def name(ctx, *, name):
     """Sets the bot's name"""
-    if ctx.message.author.id == '116079569349378049':
+    if ctx.message.author.id == '116079569349378049': #replace with your own id
         name = name.strip()
         if name != "":
             await bot.edit_profile(username=name)
@@ -423,7 +447,7 @@ async def status(ctx, *, status=None):
     """Sets the bot's status
 
     Leaving this empty will clear it. OWNER ONLY"""
-    if ctx.message.author.id == '116079569349378049':
+    if ctx.message.author.id == '116079569349378049': #replace with your own id
         if status:
             status = status.strip()
             await bot.change_status(discord.Game(name=status))
@@ -436,7 +460,7 @@ async def avatar(url):
     """Sets the bot's avatar
 
     OWNER ONLY"""
-    if ctx.message.author.id == '116079569349378049':
+    if ctx.message.author.id == '116079569349378049': #replace with your own id
         async with bot.http.session.get(url) as r:
             data = await r.read()
         await bot.edit_profile(avatar=data)
@@ -456,18 +480,7 @@ async def shutdown(ctx):
         session.close()
         await bot.logout()
 
-@bot.command(aliases=["gp"], hidden=True, pass_context=True)
-async def update(ctx):
-    if ctx.message.author.id == '116079569349378049':
-        g = git.cmd.Git('/home/fishyfing/youtubebot')
-        try:
-            g.pull()
-            await bot.say('Successfully updated.')
-        except:
-            await bot.say('Stashing changes...')
-            g.stash()
-            g.pull()
-            await bot.say('Successfully updated...')
+
 
 def main():
     set_logger()
