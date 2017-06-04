@@ -1,5 +1,0 @@
-gitdb==0.6.4
-GitPython==2.0.8
-git+https://github.com/Rapptz/discord.py@master#egg=discord.py[voice]
-google-api-python-client==1.5.1
-PyNaCl==1.0.1
