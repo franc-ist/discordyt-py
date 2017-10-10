@@ -13,13 +13,13 @@ import re
 # Some systems will crash without this because Google's Python is built
 # differently
 sys.modules['win32file'] = None
-youtube_key = 'youtube api key'
+youtube_key = ''
 
 from datadog import initialize
 
 options = {
-    'api_key': 'datadog api key',
-    'app_key': 'datadog app key'
+    'api_key': '',
+    'app_key': ''
 }
 
 initialize(**options)
