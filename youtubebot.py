@@ -29,8 +29,8 @@ from apiclient.discovery import build  # youtube api
 from datadog import initialize
 
 options = {
-    'api_key': 'datadog api key',
-    'app_key': 'datadog app key'
+    'api_key': '',
+    'app_key': ''
 }
 
 initialize(**options)
@@ -41,14 +41,14 @@ from datadog import statsd
 description = '''Minimalist rewrite of the YouTube bot'''
 
 bot = commands.AutoShardedBot(command_prefix=when_mentioned_or(
-    'yt '), description=description)
+    'yt '), description=description, shard_count=10)
 session = aiohttp.ClientSession(loop=bot.loop)
 
 
 def set_logger():
     global logger
     logger = logging.getLogger("discord")
-    logger.setLevel(logging.WARNING)
+    logger.setLevel(logging.INFO)
     handler = logging.FileHandler(
         filename='discord.log', encoding='utf-8', mode='a')
     handler.setFormatter(logging.Formatter(
@@ -61,7 +61,7 @@ def set_logger():
     logger.setLevel(logging.INFO)
 
     yt_format = logging.Formatter(
-        '\n%(asctime)s %(levelname)s YouTube Code: %(funcName)s (Line %(lineno)d): '
+        '%(asctime)s %(levelname)s YouTube Code: %(funcName)s (Line %(lineno)d): '
         '%(message)s',
         datefmt="[%d/%m/%Y %H:%M]")
 
@@ -134,10 +134,12 @@ class Formatter(commands.HelpFormatter):
 @bot.event
 async def on_ready():
     global logger
+    logger.info('Discord ready. Loading extensions...')
     extensions = ['modules.Owner', 'modules.General', 'modules.YouTube']
     for extension in extensions:
         try:
             bot.load_extension(extension)
+            logger.info("loaded {}".format(extension))
         except Exception as e:
             logger.exception('Failed to load extension {}\n{}: {}'.format(
                 extension, type(e).__name__, e))
@@ -167,13 +169,13 @@ async def on_ready():
 @bot.event
 async def update():
 
-    dbots_key = 'bots.discord.pw key'
-    Oliy_key = 'discordbots.org key'
+    dbots_key = ''
+    Oliy_key = ''
 
     payload = json.dumps({
         # 'shard_id': guild.shard_id,
         # 'shard_count': bot.shard_count,
-        'guild_count': len(bot.guilds)
+        'server_count': len(bot.guilds)
     })
 
     headers = {
@@ -189,7 +191,7 @@ async def update():
     DISCORD_BOTS_API = 'https://bots.discord.pw/api'
     Oliy_api = 'https://discordbots.org/api'
 
-# discordbots.org
+# discordbots.org 
     url = '{0}/bots/205224819883638785/stats'.format(Oliy_api)
     async with session.post(url, data=payload, headers=headers2) as resp:
         logger.info('SERVER COUNT UPDATED.\ndiscordbots.org statistics returned {0.status} for {1}\n'.format(
@@ -217,20 +219,20 @@ async def update():
         'content-type': 'application/json'
     }
 
-    url = 'https://www.carbonitex.net/discord/data/botdata.php?key=CARBON_KEY'
+    url = 'https://www.carbonitex.net/discord/data/botdata.php?key='
     async with session.post(url, data=payload, headers=headers3) as resp:
         logger.info('UPDATED SERVER COUNT\nCarbon statistics returned {0.status} for {1}\n'.format(
             resp, payload))
 
 
 @bot.event
-async def on_guild_join():
+async def on_guild_join(guild):
     await bot.update()
     statsd.increment('bot.servers.joined')
 
 
 @bot.event
-async def on_guild_leave():
+async def on_guild_leave(guild):
     await bot.update()
     statsd.increment('bot.servers.left')
 
@@ -239,15 +241,21 @@ async def on_guild_leave():
 def main():
     set_logger()
     try:
-        yield from bot.login('DISCORD_TOKEN_HERE')
+        logger.info('Logging in...')
+        yield from bot.login('')
+        logger.info('Logged in')
         # login here
+        logger.info('Connecting to gateway...')
         yield from bot.connect()
+        logger.info('Connected to gateway')
+        # logger.info('Logging in and connecting...')
+        # yield from bot.start('')
+        # logger.info('Logged in + connected')
     except TypeError as e:
         logger.warning(e)
         msg = ("\nYou are using an outdated discord.py.\n"
                "update your discord.py with by running this in your cmd "
-               "prompt/terminal.\npip3 install --upgrade git+https://"
-               "github.com/Rapptz/discord.py@rewrite")
+               "prompt/terminal.\npip3 install --upgrade git+https://github.com/Rapptz/discord.py@rewrite")
         sys.exit(msg)
 
 if __name__ == '__main__':
