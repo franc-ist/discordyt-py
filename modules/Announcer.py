@@ -30,7 +30,7 @@ from __main__ import send_cmd_help
 # Some systems will crash without this because Google's Python is built
 # differently
 sys.modules['win32file'] = None
-youtube_key = '***REMOVED***'
+youtube_key = ''
 
 def dbSetup():
     connection = r.connect(host=RDB_HOST, port=RDB_PORT)
@@ -48,8 +48,8 @@ def dbSetup():
 from datadog import initialize
 
 options = {
-    'api_key': '***REMOVED***',
-    'app_key': '***REMOVED***'
+    'api_key': '',
+    'app_key': ''
 }
 
 initialize(**options)
